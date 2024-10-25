@@ -1,0 +1,5 @@
+# All cluster
+kubectl get events
+
+# Specific namespace events
+kubectl get events --namespace=kube-system

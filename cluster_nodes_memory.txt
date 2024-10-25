@@ -1,0 +1,5 @@
+# With node names
+kubectl describe nodes | grep -A 3 "Name:\|Resource .*Requests .*Limits" | grep -v "Roles:"
+
+# Just the resources
+kubectl describe nodes | grep -A 3 "Resource .*Requests .*Limits"
