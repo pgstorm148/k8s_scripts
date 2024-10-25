@@ -1,0 +1,2 @@
+# Get detailled information about nodes
+kubectl describe node <node-name>
