@@ -1,0 +1,1 @@
+kubectl exec -it <source-pod-name> -n <namespace-name> -- curl <destination-service>:<port>

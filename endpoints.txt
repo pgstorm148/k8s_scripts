@@ -1,0 +1,3 @@
+kubectl get svc -n <namespace-name>
+
+kubectl get endpoints <service-name> -n <namespace-name>

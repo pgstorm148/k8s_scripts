@@ -1,0 +1,2 @@
+# Get all the pods of all the namespace that are not in Running state
+kubect get pod -A | grep -v "Running"

@@ -1,0 +1,1 @@
+kubectl exec -it <pod-name> -n <namespace-name> -- /bin/bash
