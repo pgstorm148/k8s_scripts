@@ -1,0 +1,5 @@
+# The command below is depreciated up to kubernetes 1.9
+kubectl get componentstatuses
+
+# You can use this command instead
+kubectl get --raw='/readyz?verbose'
