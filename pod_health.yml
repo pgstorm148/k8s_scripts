@@ -1,0 +1,38 @@
+- name: Monitor Pod Health and Warning States
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Get Pods in Warning or Failed State
+      kubernetes.core.k8s_info:
+        kind: pod
+        namespace: your_namespace  # Replace with your namespace
+      register: pod_info
+
+    - name: Filter Pods in Warning or Failed State
+      set_fact:
+        warning_pods: "{{ pod_info.results | selectattr('status.conditions', 'match', 'type=PodScheduled&status=False') }}"
+        failed_pods: "{{ pod_info.results | selectattr('status.phase', 'eq', 'Failed') }}"
+
+    - name: Check for New Warnings
+      loop: "{{ warning_pods + failed_pods }}"
+        register: check_result
+      tasks:
+        - name: Check if Pod Entered Warning State for the First Time
+          set_fact:
+            first_warning_timestamp: "{{ lookup('file', '/tmp/pod_warning_timestamps.txt') | default('') }}"
+          when: item.metadata.name not in first_warning_timestamp.split(',')
+
+        - name: Record First Warning Timestamp
+          lineinfile:
+            dest: /tmp/pod_warning_timestamps.txt
+            line: "{{ item.metadata.name }},{{ item.status.startTime }}"
+            create: yes
+            append: yes
+          when: first_warning_timestamp is not defined
+
+        - name: Send Notification (e.g., email)
+          ansible.builtin.uri:
+            url: "https://your_notification_endpoint?pod_name={{ item.metadata.name }}&state={{ item.status.phase }}&timestamp={{ item.status.startTime }}"
+            method: POST
+          when: first_warning_timestamp is not defined

@@ -1,0 +1,37 @@
+- name: Check for Initial Pod Connection Refusal
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Get Pods in Failed State
+      kubernetes.core.k8s_info:
+        kind: pod
+        namespace: your_namespace  # Replace with your namespace
+      register: pod_info
+
+    - name: Filter Pods in Failed State
+      set_fact:
+        failed_pods: "{{ pod_info.results | selectattr('status.phase', 'eq', 'Failed') }}"
+
+    - name: Check for New Failures
+      loop: "{{ failed_pods }}"
+        register: check_result
+      tasks:
+        - name: Check if Pod Failed for the First Time
+          set_fact:
+            first_failure_timestamp: "{{ lookup('file', '/tmp/pod_failure_timestamps.txt') | default('') }}"
+          when: item.metadata.name not in first_failure_timestamp.split(',')
+
+        - name: Record First Failure Timestamp
+          lineinfile:
+            dest: /tmp/pod_failure_timestamps.txt
+            line: "{{ item.metadata.name }},{{ item.status.startTime }}"
+            create: yes
+            append: yes
+          when: first_failure_timestamp is not defined
+
+        - name: Send Notification (e.g., email)
+          ansible.builtin.uri:
+            url: "https://your_notification_endpoint?pod_name={{ item.metadata.name }}&timestamp={{ item.status.startTime }}"
+            method: POST
+          when: first_failure_timestamp is not defined
